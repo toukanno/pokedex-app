@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ポケモン図鑑</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f0f0; color: #333; }
+    header { background: #e3350d; color: white; padding: 1rem; text-align: center; }
+    header h1 { font-size: 1.8rem; }
+    .controls { padding: 1rem; text-align: center; }
+    .controls input {
+      padding: 0.5rem 1rem; width: 300px; max-width: 90%;
+      border: 2px solid #ccc; border-radius: 8px; font-size: 1rem;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem; padding: 1rem; max-width: 1200px; margin: 0 auto;
+    }
+    .card {
+      background: white; border-radius: 12px; padding: 1rem;
+      text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .card img { width: 96px; height: 96px; image-rendering: pixelated; }
+    .card .number { color: #999; font-size: 0.8rem; }
+    .card .name { font-weight: bold; margin: 0.3rem 0; }
+    .card .name-ja { font-size: 0.9rem; color: #666; }
+    .types { display: flex; gap: 4px; justify-content: center; margin-top: 0.3rem; }
+    .type-badge {
+      font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
+      color: white; text-transform: capitalize;
+    }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      z-index: 100; justify-content: center; align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white; border-radius: 16px; padding: 2rem;
+      max-width: 400px; width: 90%; text-align: center;
+    }
+    .modal img { width: 200px; height: 200px; }
+    .modal h2 { margin: 0.5rem 0; }
+    .modal .stats { text-align: left; margin-top: 1rem; }
+    .modal .stats p { padding: 0.3rem 0; border-bottom: 1px solid #eee; }
+    .type-normal { background: #a8a878; } .type-fire { background: #f08030; }
+    .type-water { background: #6890f0; } .type-grass { background: #78c850; }
+    .type-electric { background: #f8d030; } .type-ice { background: #98d8d8; }
+    .type-fighting { background: #c03028; } .type-poison { background: #a040a0; }
+    .type-ground { background: #e0c068; } .type-flying { background: #a890f0; }
+    .type-psychic { background: #f85888; } .type-bug { background: #a8b820; }
+    .type-rock { background: #b8a038; } .type-ghost { background: #705898; }
+    .type-dragon { background: #7038f8; } .type-dark { background: #705848; }
+    .type-steel { background: #b8b8d0; } .type-fairy { background: #ee99ac; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ポケモン図鑑</h1>
+    <p>SQLite BLOB画像格納デモ</p>
+  </header>
+  <div class="controls">
+    <input type="text" id="search" placeholder="ポケモンを検索...">
+  </div>
+  <div class="grid" id="pokemon-grid"></div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <script>
+    let allPokemon = [];
+
+    async function loadPokemon() {
+      const res = await fetch('/api/pokemon');
+      allPokemon = await res.json();
+      renderGrid(allPokemon);
+    }
+
+    function renderGrid(list) {
+      const grid = document.getElementById('pokemon-grid');
+      grid.innerHTML = list.map(p => `
+        <div class="card" onclick="showDetail(${p.id})">
+          <img src="/api/pokemon/${p.id}/image/front_default" alt="${p.name_ja || p.name}"
+               onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2296%22><text x=%2248%22 y=%2248%22 text-anchor=%22middle%22 font-size=%2240%22>?</text></svg>'">
+          <div class="number">#${String(p.id).padStart(3, '0')}</div>
+          <div class="name-ja">${p.name_ja || ''}</div>
+          <div class="name">${p.name}</div>
+          <div class="types">
+            ${p.types.split(',').map(t => `<span class="type-badge type-${t}">${t}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function showDetail(id) {
+      const res = await fetch(`/api/pokemon/${id}`);
+      const p = await res.json();
+      const modal = document.getElementById('modal');
+      const content = document.getElementById('modal-content');
+
+      const imgType = p.images.includes('official') ? 'official' : 'front_default';
+
+      content.innerHTML = `
+        <img src="/api/pokemon/${p.id}/image/${imgType}" alt="${p.name_ja || p.name}">
+        <h2>${p.name_ja || ''} <small>(${p.name})</small></h2>
+        <div class="types">
+          ${p.types.split(',').map(t => `<span class="type-badge type-${t}">${t}</span>`).join('')}
+        </div>
+        <div class="stats">
+          <p>図鑑番号: #${String(p.id).padStart(3, '0')}</p>
+          <p>高さ: ${(p.height / 10).toFixed(1)} m</p>
+          <p>重さ: ${(p.weight / 10).toFixed(1)} kg</p>
+          <p>利用可能な画像: ${p.images.join(', ')}</p>
+        </div>
+      `;
+      modal.classList.add('active');
+    }
+
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') {
+        document.getElementById('modal').classList.remove('active');
+      }
+    });
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = allPokemon.filter(p =>
+        p.name.includes(q) || (p.name_ja && p.name_ja.includes(q)) || String(p.id) === q
+      );
+      renderGrid(filtered);
+    });
+
+    loadPokemon();
+  </script>
+</body>
+</html>
