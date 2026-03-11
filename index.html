@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポケモン図鑑</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>ポケモン図鑑</h1>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="ポケモン名または番号で検索...">
+            <button id="search-btn">検索</button>
+        </div>
+    </header>
+
+    <main>
+        <div id="pokemon-detail" class="pokemon-detail hidden">
+            <button id="close-detail" class="close-btn">&times;</button>
+            <div class="detail-content">
+                <div class="detail-header">
+                    <img id="detail-img" src="" alt="">
+                    <div class="detail-info">
+                        <h2 id="detail-name"></h2>
+                        <span id="detail-id" class="pokemon-id"></span>
+                        <div id="detail-types" class="types"></div>
+                    </div>
+                </div>
+                <div class="detail-stats">
+                    <h3>基本ステータス</h3>
+                    <div id="stats-container"></div>
+                </div>
+                <div class="detail-about">
+                    <div class="about-item">
+                        <span class="label">高さ</span>
+                        <span id="detail-height"></span>
+                    </div>
+                    <div class="about-item">
+                        <span class="label">重さ</span>
+                        <span id="detail-weight"></span>
+                    </div>
+                    <div class="about-item">
+                        <span class="label">能力</span>
+                        <span id="detail-abilities"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pokemon-grid" class="pokemon-grid"></div>
+        <div id="loading" class="loading hidden">読み込み中...</div>
+        <button id="load-more" class="load-more-btn">もっと読み込む</button>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
