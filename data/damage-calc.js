@@ -226,6 +226,29 @@ function calculateDamage(params) {
   };
 }
 
+// 個体値逆算（HP）
+function reverseCalcHPIV(baseHP, actualHP, ev, level) {
+  if (baseHP === 1) return actualHP === 1 ? { min: 0, max: 31 } : null;
+  const results = [];
+  for (let iv = 0; iv <= 31; iv++) {
+    const calc = calcHP(baseHP, iv, ev, level);
+    if (calc === actualHP) results.push(iv);
+  }
+  if (results.length === 0) return null;
+  return { min: results[0], max: results[results.length - 1], values: results };
+}
+
+// 個体値逆算（HP以外）
+function reverseCalcStatIV(baseStat, actualStat, ev, level, natureMod) {
+  const results = [];
+  for (let iv = 0; iv <= 31; iv++) {
+    const calc = calcStat(baseStat, iv, ev, level, natureMod);
+    if (calc === actualStat) results.push(iv);
+  }
+  if (results.length === 0) return null;
+  return { min: results[0], max: results[results.length - 1], values: results };
+}
+
 // すばやさ実数値計算
 function calcSpeedStat(pokemonId, level, nature, iv, ev, rankMod, item) {
   const pokemon = POKEMON_DB[pokemonId];
