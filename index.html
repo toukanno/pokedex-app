@@ -3,56 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケモン図鑑</title>
+    <title>ポケモン攻略ツール - ダメージ計算・図鑑・タイプ相性</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>ポケモン図鑑</h1>
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="ポケモン名または番号で検索...">
-            <button id="search-btn">検索</button>
+    <!-- ヘッダー -->
+    <header class="site-header">
+        <div class="header-inner">
+            <h1 class="site-title" onclick="navigateTo('home')">
+                <span class="logo-icon">⚡</span>ポケモン攻略ツール
+            </h1>
+            <nav class="main-nav">
+                <a href="#" class="nav-link active" data-page="home">ホーム</a>
+                <a href="#" class="nav-link" data-page="damage-calc">ダメージ計算</a>
+                <a href="#" class="nav-link" data-page="pokedex">ポケモン図鑑</a>
+                <a href="#" class="nav-link" data-page="type-chart">タイプ相性</a>
+                <a href="#" class="nav-link" data-page="stats-compare">種族値比較</a>
+            </nav>
+            <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
         </div>
     </header>
 
-    <main>
-        <div id="pokemon-detail" class="pokemon-detail hidden">
-            <button id="close-detail" class="close-btn">&times;</button>
-            <div class="detail-content">
-                <div class="detail-header">
-                    <img id="detail-img" src="" alt="">
-                    <div class="detail-info">
-                        <h2 id="detail-name"></h2>
-                        <span id="detail-id" class="pokemon-id"></span>
-                        <div id="detail-types" class="types"></div>
+    <!-- モバイルナビ -->
+    <div class="mobile-nav hidden" id="mobile-nav">
+        <a href="#" class="mobile-nav-link" data-page="home">ホーム</a>
+        <a href="#" class="mobile-nav-link" data-page="damage-calc">ダメージ計算</a>
+        <a href="#" class="mobile-nav-link" data-page="pokedex">ポケモン図鑑</a>
+        <a href="#" class="mobile-nav-link" data-page="type-chart">タイプ相性</a>
+        <a href="#" class="mobile-nav-link" data-page="stats-compare">種族値比較</a>
+    </div>
+
+    <main class="main-content">
+        <!-- ================== ホーム ================== -->
+        <section id="page-home" class="page active">
+            <div class="hero-section">
+                <h2>ポケモン対戦攻略総合ツール</h2>
+                <p>ダメージ計算・種族値比較・タイプ相性表・ポケモン図鑑を網羅した総合攻略サイト</p>
+            </div>
+            <div class="tool-cards">
+                <div class="tool-card" onclick="navigateTo('damage-calc')">
+                    <div class="tool-card-icon">🔥</div>
+                    <h3>ダメージ計算機</h3>
+                    <p>第9世代対応の精密ダメージ計算。努力値・性格・持ち物・天候・フィールド全対応。確定数表示。</p>
+                </div>
+                <div class="tool-card" onclick="navigateTo('pokedex')">
+                    <div class="tool-card-icon">📖</div>
+                    <h3>ポケモン図鑑</h3>
+                    <p>種族値・タイプ・特性・覚える技をすべて確認可能。PokeAPIで最新データを取得。</p>
+                </div>
+                <div class="tool-card" onclick="navigateTo('type-chart')">
+                    <div class="tool-card-icon">⚔️</div>
+                    <h3>タイプ相性表</h3>
+                    <p>全18タイプの相性を一覧表示。攻撃・防御どちらの視点からも確認可能。</p>
+                </div>
+                <div class="tool-card" onclick="navigateTo('stats-compare')">
+                    <div class="tool-card-icon">📊</div>
+                    <h3>種族値比較</h3>
+                    <p>複数ポケモンの種族値をグラフで比較。実数値計算にも対応。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================== ダメージ計算機 ================== -->
+        <section id="page-damage-calc" class="page">
+            <h2 class="page-title">ダメージ計算機</h2>
+            <div class="calc-container">
+                <!-- 攻撃側 -->
+                <div class="calc-side attacker-side">
+                    <h3 class="side-title attacker-title">攻撃側</h3>
+                    <div class="pokemon-selector">
+                        <label>ポケモン</label>
+                        <select id="atk-pokemon"></select>
+                    </div>
+                    <div class="pokemon-sprite-area">
+                        <img id="atk-sprite" src="" alt="" class="calc-sprite">
+                        <div id="atk-types" class="calc-types"></div>
+                    </div>
+                    <div class="stat-inputs">
+                        <div class="input-row">
+                            <label>Lv</label>
+                            <input type="number" id="atk-level" value="50" min="1" max="100">
+                        </div>
+                        <div class="input-row">
+                            <label>性格</label>
+                            <select id="atk-nature"></select>
+                        </div>
+                        <div class="input-row">
+                            <label>持ち物</label>
+                            <select id="atk-item"></select>
+                        </div>
+                    </div>
+
+                    <!-- 努力値・個体値 -->
+                    <div class="ev-iv-section">
+                        <h4>個体値 / 努力値</h4>
+                        <table class="ev-iv-table">
+                            <thead>
+                                <tr><th></th><th>種族値</th><th>個体値</th><th>努力値</th><th>実数値</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>HP</td><td id="atk-base-hp">-</td><td><input type="number" class="atk-iv" data-stat="hp" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="hp" value="0" min="0" max="252" step="4"></td><td id="atk-real-hp">-</td></tr>
+                                <tr><td>こうげき</td><td id="atk-base-atk">-</td><td><input type="number" class="atk-iv" data-stat="atk" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="atk" value="0" min="0" max="252" step="4"></td><td id="atk-real-atk">-</td></tr>
+                                <tr><td>ぼうぎょ</td><td id="atk-base-def">-</td><td><input type="number" class="atk-iv" data-stat="def" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="def" value="0" min="0" max="252" step="4"></td><td id="atk-real-def">-</td></tr>
+                                <tr><td>とくこう</td><td id="atk-base-spa">-</td><td><input type="number" class="atk-iv" data-stat="spa" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="spa" value="0" min="0" max="252" step="4"></td><td id="atk-real-spa">-</td></tr>
+                                <tr><td>とくぼう</td><td id="atk-base-spd">-</td><td><input type="number" class="atk-iv" data-stat="spd" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="spd" value="0" min="0" max="252" step="4"></td><td id="atk-real-spd">-</td></tr>
+                                <tr><td>すばやさ</td><td id="atk-base-spe">-</td><td><input type="number" class="atk-iv" data-stat="spe" value="31" min="0" max="31"></td><td><input type="number" class="atk-ev" data-stat="spe" value="0" min="0" max="252" step="4"></td><td id="atk-real-spe">-</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="ev-total">努力値合計: <span id="atk-ev-total">0</span> / 510</div>
+                    </div>
+
+                    <div class="rank-inputs">
+                        <div class="input-row">
+                            <label>こうげきランク</label>
+                            <select id="atk-rank-atk">
+                                <option value="-6">-6</option><option value="-5">-5</option><option value="-4">-4</option>
+                                <option value="-3">-3</option><option value="-2">-2</option><option value="-1">-1</option>
+                                <option value="0" selected>±0</option>
+                                <option value="1">+1</option><option value="2">+2</option><option value="3">+3</option>
+                                <option value="4">+4</option><option value="5">+5</option><option value="6">+6</option>
+                            </select>
+                        </div>
+                        <div class="input-row">
+                            <label>とくこうランク</label>
+                            <select id="atk-rank-spa">
+                                <option value="-6">-6</option><option value="-5">-5</option><option value="-4">-4</option>
+                                <option value="-3">-3</option><option value="-2">-2</option><option value="-1">-1</option>
+                                <option value="0" selected>±0</option>
+                                <option value="1">+1</option><option value="2">+2</option><option value="3">+3</option>
+                                <option value="4">+4</option><option value="5">+5</option><option value="6">+6</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 技選択 -->
+                    <div class="move-selector">
+                        <label>使用する技</label>
+                        <select id="atk-move"></select>
+                        <div id="move-info" class="move-info-box"></div>
                     </div>
                 </div>
-                <div class="detail-stats">
-                    <h3>基本ステータス</h3>
-                    <div id="stats-container"></div>
+
+                <!-- 中央：結果表示 -->
+                <div class="calc-center">
+                    <div class="field-options">
+                        <h4>フィールド条件</h4>
+                        <div class="input-row">
+                            <label>天候</label>
+                            <select id="calc-weather">
+                                <option value="なし">なし</option>
+                                <option value="晴れ">晴れ</option>
+                                <option value="雨">雨</option>
+                                <option value="砂嵐">砂嵐</option>
+                                <option value="雪">雪</option>
+                            </select>
+                        </div>
+                        <div class="input-row">
+                            <label>フィールド</label>
+                            <select id="calc-terrain">
+                                <option value="なし">なし</option>
+                                <option value="エレキ">エレキフィールド</option>
+                                <option value="グラス">グラスフィールド</option>
+                                <option value="サイコ">サイコフィールド</option>
+                                <option value="ミスト">ミストフィールド</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row">
+                            <label><input type="checkbox" id="calc-critical"> 急所</label>
+                            <label><input type="checkbox" id="calc-burn"> やけど</label>
+                        </div>
+                        <div class="checkbox-row">
+                            <label><input type="checkbox" id="calc-reflect"> リフレクター</label>
+                            <label><input type="checkbox" id="calc-lightscreen"> ひかりのかべ</label>
+                        </div>
+                    </div>
+
+                    <button class="calc-btn" id="calc-btn">ダメージ計算</button>
+
+                    <div id="calc-result" class="calc-result">
+                        <div class="result-placeholder">ポケモンと技を選んで計算ボタンを押してください</div>
+                    </div>
                 </div>
-                <div class="detail-about">
-                    <div class="about-item">
-                        <span class="label">高さ</span>
-                        <span id="detail-height"></span>
+
+                <!-- 防御側 -->
+                <div class="calc-side defender-side">
+                    <h3 class="side-title defender-title">防御側</h3>
+                    <div class="pokemon-selector">
+                        <label>ポケモン</label>
+                        <select id="def-pokemon"></select>
                     </div>
-                    <div class="about-item">
-                        <span class="label">重さ</span>
-                        <span id="detail-weight"></span>
+                    <div class="pokemon-sprite-area">
+                        <img id="def-sprite" src="" alt="" class="calc-sprite">
+                        <div id="def-types" class="calc-types"></div>
                     </div>
-                    <div class="about-item">
-                        <span class="label">能力</span>
-                        <span id="detail-abilities"></span>
+                    <div class="stat-inputs">
+                        <div class="input-row">
+                            <label>Lv</label>
+                            <input type="number" id="def-level" value="50" min="1" max="100">
+                        </div>
+                        <div class="input-row">
+                            <label>性格</label>
+                            <select id="def-nature"></select>
+                        </div>
+                        <div class="input-row">
+                            <label>持ち物</label>
+                            <select id="def-item"></select>
+                        </div>
+                    </div>
+
+                    <div class="ev-iv-section">
+                        <h4>個体値 / 努力値</h4>
+                        <table class="ev-iv-table">
+                            <thead>
+                                <tr><th></th><th>種族値</th><th>個体値</th><th>努力値</th><th>実数値</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>HP</td><td id="def-base-hp">-</td><td><input type="number" class="def-iv" data-stat="hp" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="hp" value="0" min="0" max="252" step="4"></td><td id="def-real-hp">-</td></tr>
+                                <tr><td>こうげき</td><td id="def-base-atk">-</td><td><input type="number" class="def-iv" data-stat="atk" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="atk" value="0" min="0" max="252" step="4"></td><td id="def-real-atk">-</td></tr>
+                                <tr><td>ぼうぎょ</td><td id="def-base-def">-</td><td><input type="number" class="def-iv" data-stat="def" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="def" value="0" min="0" max="252" step="4"></td><td id="def-real-def">-</td></tr>
+                                <tr><td>とくこう</td><td id="def-base-spa">-</td><td><input type="number" class="def-iv" data-stat="spa" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="spa" value="0" min="0" max="252" step="4"></td><td id="def-real-spa">-</td></tr>
+                                <tr><td>とくぼう</td><td id="def-base-spd">-</td><td><input type="number" class="def-iv" data-stat="spd" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="spd" value="0" min="0" max="252" step="4"></td><td id="def-real-spd">-</td></tr>
+                                <tr><td>すばやさ</td><td id="def-base-spe">-</td><td><input type="number" class="def-iv" data-stat="spe" value="31" min="0" max="31"></td><td><input type="number" class="def-ev" data-stat="spe" value="0" min="0" max="252" step="4"></td><td id="def-real-spe">-</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="ev-total">努力値合計: <span id="def-ev-total">0</span> / 510</div>
+                    </div>
+
+                    <div class="rank-inputs">
+                        <div class="input-row">
+                            <label>ぼうぎょランク</label>
+                            <select id="def-rank-def">
+                                <option value="-6">-6</option><option value="-5">-5</option><option value="-4">-4</option>
+                                <option value="-3">-3</option><option value="-2">-2</option><option value="-1">-1</option>
+                                <option value="0" selected>±0</option>
+                                <option value="1">+1</option><option value="2">+2</option><option value="3">+3</option>
+                                <option value="4">+4</option><option value="5">+5</option><option value="6">+6</option>
+                            </select>
+                        </div>
+                        <div class="input-row">
+                            <label>とくぼうランク</label>
+                            <select id="def-rank-spd">
+                                <option value="-6">-6</option><option value="-5">-5</option><option value="-4">-4</option>
+                                <option value="-3">-3</option><option value="-2">-2</option><option value="-1">-1</option>
+                                <option value="0" selected>±0</option>
+                                <option value="1">+1</option><option value="2">+2</option><option value="3">+3</option>
+                                <option value="4">+4</option><option value="5">+5</option><option value="6">+6</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="pokemon-grid" class="pokemon-grid"></div>
-        <div id="loading" class="loading hidden">読み込み中...</div>
-        <button id="load-more" class="load-more-btn">もっと読み込む</button>
+        <!-- ================== ポケモン図鑑 ================== -->
+        <section id="page-pokedex" class="page">
+            <h2 class="page-title">ポケモン図鑑</h2>
+            <div class="pokedex-search-bar">
+                <input type="text" id="pokedex-search" placeholder="ポケモン名で検索...">
+                <div class="type-filter" id="type-filter"></div>
+            </div>
+            <div id="pokedex-grid" class="pokedex-grid"></div>
+
+            <!-- 図鑑詳細モーダル -->
+            <div id="pokedex-modal" class="modal hidden">
+                <div class="modal-overlay"></div>
+                <div class="modal-content pokedex-detail-modal">
+                    <button class="modal-close">&times;</button>
+                    <div class="modal-body">
+                        <div class="detail-top">
+                            <img id="modal-sprite" src="" alt="" class="modal-sprite">
+                            <div class="detail-top-info">
+                                <h3 id="modal-name"></h3>
+                                <span id="modal-id" class="pokemon-number"></span>
+                                <div id="modal-types" class="modal-types"></div>
+                                <div id="modal-abilities" class="modal-abilities"></div>
+                            </div>
+                        </div>
+                        <div class="detail-stats-section">
+                            <h4>種族値</h4>
+                            <div id="modal-stats" class="modal-stats"></div>
+                            <div id="modal-stats-total" class="stats-total"></div>
+                        </div>
+                        <div class="detail-moves-section">
+                            <h4>覚える技</h4>
+                            <div id="modal-moves" class="modal-moves-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================== タイプ相性表 ================== -->
+        <section id="page-type-chart" class="page">
+            <h2 class="page-title">タイプ相性表</h2>
+            <p class="page-desc">横軸が攻撃タイプ、縦軸が防御タイプ</p>
+            <div class="type-chart-wrapper">
+                <table id="type-chart-table" class="type-chart-table"></table>
+            </div>
+            <div class="type-checker">
+                <h3>タイプ相性チェッカー</h3>
+                <div class="type-checker-inputs">
+                    <div class="input-group">
+                        <label>攻撃タイプ</label>
+                        <select id="check-atk-type"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>防御タイプ1</label>
+                        <select id="check-def-type1"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>防御タイプ2</label>
+                        <select id="check-def-type2">
+                            <option value="">なし</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="type-check-result" class="type-check-result"></div>
+            </div>
+            <!-- 防御相性チェッカー -->
+            <div class="type-checker">
+                <h3>防御相性チェッカー</h3>
+                <p class="checker-desc">ポケモンのタイプを選ぶと、各タイプからの被ダメージ倍率を表示します</p>
+                <div class="type-checker-inputs">
+                    <div class="input-group">
+                        <label>タイプ1</label>
+                        <select id="def-check-type1"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>タイプ2</label>
+                        <select id="def-check-type2">
+                            <option value="">なし</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="def-type-result" class="def-type-result"></div>
+            </div>
+        </section>
+
+        <!-- ================== 種族値比較 ================== -->
+        <section id="page-stats-compare" class="page">
+            <h2 class="page-title">種族値比較</h2>
+            <div class="compare-controls">
+                <div class="compare-add">
+                    <select id="compare-pokemon-select"></select>
+                    <button id="compare-add-btn" class="btn-primary">追加</button>
+                </div>
+                <button id="compare-clear-btn" class="btn-secondary">クリア</button>
+            </div>
+            <div id="compare-chart" class="compare-chart"></div>
+            <div id="compare-table-wrapper" class="compare-table-wrapper"></div>
+        </section>
     </main>
 
+    <!-- フッター -->
+    <footer class="site-footer">
+        <p>ポケモン攻略ツール - データはPokeAPIおよびゲーム内データを参照</p>
+        <p>ポケットモンスター・ポケモンは任天堂・クリーチャーズ・ゲームフリークの登録商標です</p>
+    </footer>
+
+    <script src="data/pokemon-data.js"></script>
+    <script src="data/moves-data.js"></script>
+    <script src="data/damage-calc.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
