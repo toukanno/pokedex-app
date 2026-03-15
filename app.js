@@ -377,6 +377,13 @@ function initPokedex() {
   const modal = document.getElementById('pokedex-modal');
   modal.querySelector('.modal-overlay').addEventListener('click', () => modal.classList.add('hidden'));
   modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      modal.classList.add('hidden');
+    }
+  });
 }
 
 function renderPokedexGrid() {
