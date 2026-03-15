@@ -16,14 +16,14 @@
             <h1 class="site-title" onclick="navigateTo('home')">
                 <span class="logo-icon">⚡</span>ポケモン攻略ツール
             </h1>
-            <nav class="main-nav">
+            <nav class="main-nav" aria-label="メインナビゲーション">
                 <a href="#" class="nav-link active" data-page="home">ホーム</a>
                 <a href="#" class="nav-link" data-page="damage-calc">ダメージ計算</a>
                 <a href="#" class="nav-link" data-page="pokedex">ポケモン図鑑</a>
                 <a href="#" class="nav-link" data-page="type-chart">タイプ相性</a>
                 <a href="#" class="nav-link" data-page="stats-compare">種族値比較</a>
             </nav>
-            <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="メニューを開く" aria-expanded="false">☰</button>
         </div>
     </header>
 
@@ -268,10 +268,10 @@
             <div id="pokedex-grid" class="pokedex-grid"></div>
 
             <!-- 図鑑詳細モーダル -->
-            <div id="pokedex-modal" class="modal hidden">
+            <div id="pokedex-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="ポケモン詳細">
                 <div class="modal-overlay"></div>
                 <div class="modal-content pokedex-detail-modal">
-                    <button class="modal-close">&times;</button>
+                    <button class="modal-close" aria-label="閉じる">&times;</button>
                     <div class="modal-body">
                         <div class="detail-top">
                             <img id="modal-sprite" src="" alt="" class="modal-sprite">

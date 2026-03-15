@@ -202,8 +202,10 @@ function calculateDamage(params) {
 
   // 確定数計算
   let guaranteed = 0;
-  if (maxPercent > 0) {
+  if (minPercent > 0) {
     guaranteed = Math.ceil(100 / minPercent);
+  } else if (maxPercent > 0) {
+    guaranteed = 0; // min damage is 0, KO not guaranteed
   }
 
   // 効果テキスト

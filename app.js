@@ -25,12 +25,23 @@ document.querySelectorAll('[data-page]').forEach(link => {
 
 // Mobile menu
 document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-  document.getElementById('mobile-nav').classList.toggle('hidden');
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('mobile-menu-btn');
+  nav.classList.toggle('hidden');
+  btn.setAttribute('aria-expanded', !nav.classList.contains('hidden'));
 });
 
 // ============================
 // Utility Functions
 // ============================
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 const SPRITE_URL = (nameEn) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonSpriteId(nameEn)}.png`;
 
 function getPokemonSpriteId(nameEn) {
@@ -284,10 +295,10 @@ function runDamageCalc() {
 
   const atkIV = {}, atkEV = {}, defIV = {}, defEV = {};
   ['hp','atk','def','spa','spd','spe'].forEach(s => {
-    atkIV[s] = parseInt(document.querySelector(`.atk-iv[data-stat="${s}"]`)?.value) || 0;
-    atkEV[s] = parseInt(document.querySelector(`.atk-ev[data-stat="${s}"]`)?.value) || 0;
-    defIV[s] = parseInt(document.querySelector(`.def-iv[data-stat="${s}"]`)?.value) || 0;
-    defEV[s] = parseInt(document.querySelector(`.def-ev[data-stat="${s}"]`)?.value) || 0;
+    atkIV[s] = Math.min(31, Math.max(0, parseInt(document.querySelector(`.atk-iv[data-stat="${s}"]`)?.value) || 0));
+    atkEV[s] = Math.min(252, Math.max(0, parseInt(document.querySelector(`.atk-ev[data-stat="${s}"]`)?.value) || 0));
+    defIV[s] = Math.min(31, Math.max(0, parseInt(document.querySelector(`.def-iv[data-stat="${s}"]`)?.value) || 0));
+    defEV[s] = Math.min(252, Math.max(0, parseInt(document.querySelector(`.def-ev[data-stat="${s}"]`)?.value) || 0));
   });
 
   const result = calculateDamage({
@@ -333,7 +344,8 @@ function displayDamageResult(result, atkId, defId, moveName) {
 
   let koClass = 'ko-high';
   let koText = `確${result.guaranteed}発`;
-  if (result.guaranteed === 1) { koClass = 'ko-1'; koText = '確定1発'; }
+  if (result.guaranteed === 0) { koClass = 'ko-high'; koText = '倒せない'; }
+  else if (result.guaranteed === 1) { koClass = 'ko-1'; koText = '確定1発'; }
   else if (result.guaranteed === 2) { koClass = 'ko-2'; koText = '確定2発'; }
   else if (result.guaranteed === 3) { koClass = 'ko-3'; koText = '確定3発'; }
 
@@ -371,7 +383,7 @@ function initPokedex() {
   renderPokedexGrid();
   initTypeFilter();
 
-  document.getElementById('pokedex-search').addEventListener('input', filterPokedex);
+  document.getElementById('pokedex-search').addEventListener('input', debounce(filterPokedex, 200));
 
   // Modal close
   const modal = document.getElementById('pokedex-modal');
@@ -690,7 +702,7 @@ function renderCompare() {
     const row = document.createElement('div');
     row.className = 'compare-pokemon-row';
     row.innerHTML = `
-      <img class="cp-sprite" src="${SPRITE_URL(poke.nameEn)}" alt="${poke.name}">
+      <img class="cp-sprite" src="${SPRITE_URL(poke.nameEn)}" alt="${poke.name}" loading="lazy">
       <div class="cp-name" style="color:${color}">${poke.name}</div>
       <div class="cp-bars">
         ${['hp','atk','def','spa','spd','spe'].map(s => `
@@ -704,9 +716,17 @@ function renderCompare() {
         `).join('')}
       </div>
       <div class="cp-total">${total}</div>
-      <button class="cp-remove" onclick="removeCompare('${id}')">&times;</button>
+      <button class="cp-remove" data-remove-id="${id}">&times;</button>
     `;
     chartEl.appendChild(row);
+  });
+
+  // Event delegation for remove buttons
+  chartEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-id]');
+    if (btn) {
+      removeCompare(btn.dataset.removeId);
+    }
   });
 
   // Table
