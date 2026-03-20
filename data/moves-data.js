@@ -1,6 +1,8 @@
 // 技データベース - 威力・タイプ・分類・命中率・PP・追加効果
 const MOVES_DB = {
   // ノーマル技
+  "ひっかく":         { type: "ノーマル", category: "物理", power: 40, accuracy: 100, pp: 35, effect: "" },
+  "かみつく":         { type: "あく", category: "物理", power: 60, accuracy: 100, pp: 25, effect: "30%ひるみ" },
   "たいあたり":       { type: "ノーマル", category: "物理", power: 40, accuracy: 100, pp: 35, effect: "" },
   "すてみタックル":   { type: "ノーマル", category: "物理", power: 120, accuracy: 100, pp: 15, effect: "反動ダメージ1/3" },
   "のしかかり":       { type: "ノーマル", category: "物理", power: 85, accuracy: 100, pp: 15, effect: "30%まひ" },
@@ -22,6 +24,7 @@ const MOVES_DB = {
   "ブラストバーン":   { type: "ほのお", category: "特殊", power: 150, accuracy: 90, pp: 5, effect: "次ターン行動不能" },
   "フレアドライブ":   { type: "ほのお", category: "物理", power: 120, accuracy: 100, pp: 15, effect: "反動1/3、10%やけど" },
   "ブレイズキック":   { type: "ほのお", category: "物理", power: 85, accuracy: 90, pp: 10, effect: "急所↑、10%やけど" },
+  "ほのおのパンチ":   { type: "ほのお", category: "物理", power: 75, accuracy: 100, pp: 15, effect: "10%やけど" },
   "ほのおのうず":     { type: "ほのお", category: "特殊", power: 35, accuracy: 85, pp: 15, effect: "4-5ターン拘束" },
   "ニトロチャージ":   { type: "ほのお", category: "物理", power: 50, accuracy: 100, pp: 20, effect: "自分のすばやさ+1" },
   "ねっぷう":         { type: "ほのお", category: "特殊", power: 95, accuracy: 90, pp: 10, effect: "10%やけど" },
@@ -73,13 +76,13 @@ const MOVES_DB = {
   // こおり技
   "れいとうビーム":   { type: "こおり", category: "特殊", power: 90, accuracy: 100, pp: 10, effect: "10%こおり" },
   "ふぶき":           { type: "こおり", category: "特殊", power: 110, accuracy: 70, pp: 5, effect: "10%こおり(あられ時必中)" },
+  "れいとうパンチ":   { type: "こおり", category: "物理", power: 75, accuracy: 100, pp: 15, effect: "10%こおり" },
   "こおりのキバ":     { type: "こおり", category: "物理", power: 65, accuracy: 95, pp: 15, effect: "10%こおりor10%ひるみ" },
   "こおりのつぶて":   { type: "こおり", category: "物理", power: 40, accuracy: 100, pp: 30, effect: "先制攻撃+1" },
   "つららばり":       { type: "こおり", category: "物理", power: 25, accuracy: 100, pp: 30, effect: "2-5回連続攻撃" },
   "つららおとし":     { type: "こおり", category: "物理", power: 85, accuracy: 90, pp: 10, effect: "30%ひるみ" },
   "ぜったいれいど":   { type: "こおり", category: "特殊", power: 0, accuracy: 30, pp: 5, effect: "一撃必殺" },
   "こごえるかぜ":     { type: "こおり", category: "特殊", power: 55, accuracy: 95, pp: 15, effect: "相手のすばやさ-1" },
-  "きょけんとつげき": { type: "ドラゴン", category: "物理", power: 120, accuracy: 100, pp: 5, effect: "次ターンぼうぎょ-1" },
   // かくとう技
   "インファイト":     { type: "かくとう", category: "物理", power: 120, accuracy: 100, pp: 5, effect: "自分のぼうぎょ・とくぼう-1" },
   "とびひざげり":     { type: "かくとう", category: "物理", power: 130, accuracy: 90, pp: 10, effect: "外すと最大HP半分ダメージ" },
@@ -140,7 +143,6 @@ const MOVES_DB = {
   "かげうち":         { type: "ゴースト", category: "物理", power: 40, accuracy: 100, pp: 30, effect: "先制攻撃+1" },
   "ゴーストダイブ":   { type: "ゴースト", category: "物理", power: 90, accuracy: 100, pp: 10, effect: "溜め技" },
   "たたりめ":         { type: "ゴースト", category: "特殊", power: 65, accuracy: 100, pp: 10, effect: "状態異常時威力2倍" },
-  "ゴールドラッシュ": { type: "はがね", category: "特殊", power: 120, accuracy: 100, pp: 5, effect: "自分のとくこう-1" },
   // ドラゴン技
   "りゅうのいかり":   { type: "ドラゴン", category: "特殊", power: 0, accuracy: 100, pp: 10, effect: "固定40ダメージ" },
   "りゅうのはどう":   { type: "ドラゴン", category: "特殊", power: 85, accuracy: 100, pp: 10, effect: "" },
@@ -148,6 +150,7 @@ const MOVES_DB = {
   "げきりん":         { type: "ドラゴン", category: "物理", power: 120, accuracy: 100, pp: 10, effect: "2-3ターン攻撃後こんらん" },
   "ドラゴンクロー":   { type: "ドラゴン", category: "物理", power: 80, accuracy: 100, pp: 15, effect: "" },
   "ドラゴンアロー":   { type: "ドラゴン", category: "物理", power: 50, accuracy: 100, pp: 10, effect: "2回攻撃" },
+  "きょけんとつげき": { type: "ドラゴン", category: "物理", power: 120, accuracy: 100, pp: 5, effect: "次ターン被ダメージ2倍" },
   // あく技
   "あくのはどう":     { type: "あく", category: "特殊", power: 80, accuracy: 100, pp: 15, effect: "20%ひるみ" },
   "かみつく":         { type: "あく", category: "物理", power: 60, accuracy: 100, pp: 25, effect: "30%ひるみ" },
@@ -165,6 +168,7 @@ const MOVES_DB = {
   "ジャイロボール":   { type: "はがね", category: "物理", power: 0, accuracy: 100, pp: 5, effect: "相手より遅いほど威力↑" },
   "ヘビーボンバー":   { type: "はがね", category: "物理", power: 0, accuracy: 100, pp: 10, effect: "自分が重いほど威力↑" },
   "メタルクロー":     { type: "はがね", category: "物理", power: 50, accuracy: 95, pp: 35, effect: "10%こうげき+1" },
+  "ゴールドラッシュ": { type: "はがね", category: "特殊", power: 120, accuracy: 100, pp: 5, effect: "自分のとくこう-1" },
   // フェアリー技
   "ムーンフォース":   { type: "フェアリー", category: "特殊", power: 95, accuracy: 100, pp: 15, effect: "30%とくこう-1" },
   "マジカルシャイン": { type: "フェアリー", category: "特殊", power: 80, accuracy: 100, pp: 10, effect: "" },
