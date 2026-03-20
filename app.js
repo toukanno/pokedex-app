@@ -167,6 +167,23 @@ function initDamageCalc() {
 
   // Also calc on move change
   document.getElementById('atk-move').addEventListener('change', updateMoveInfo);
+
+  // IV/EV preset buttons
+  document.querySelectorAll('.iv-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const side = btn.dataset.side;
+      const val = parseInt(btn.dataset.iv);
+      document.querySelectorAll(`.${side}-iv`).forEach(el => { el.value = val; });
+      updateCalcStats(side);
+    });
+  });
+  document.querySelectorAll('.ev-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const side = btn.dataset.side;
+      document.querySelectorAll(`.${side}-ev`).forEach(el => { el.value = 0; });
+      updateCalcStats(side);
+    });
+  });
 }
 
 function updateCalcSide(side) {
@@ -752,6 +769,149 @@ function renderCompareTable() {
 }
 
 // ============================
+// IV Calculator Page
+// ============================
+function initIVCalc() {
+  populatePokemonSelect(document.getElementById('iv-pokemon'));
+  populateNatureSelect(document.getElementById('iv-nature'));
+
+  document.getElementById('iv-pokemon').addEventListener('change', updateIVCalcSide);
+  document.getElementById('iv-calc-btn').addEventListener('click', runIVCalc);
+}
+
+function updateIVCalcSide() {
+  const pokemonId = document.getElementById('iv-pokemon').value;
+  if (!pokemonId) return;
+
+  const pokemon = POKEMON_DB[pokemonId];
+  if (!pokemon) return;
+
+  const spriteEl = document.getElementById('iv-sprite');
+  spriteEl.src = SPRITE_URL(pokemon.nameEn);
+  spriteEl.alt = pokemon.name;
+
+  const typesEl = document.getElementById('iv-types');
+  typesEl.innerHTML = '';
+  pokemon.types.forEach(t => typesEl.appendChild(createTypeBadge(t)));
+
+  ['hp','atk','def','spa','spd','spe'].forEach(s => {
+    const el = document.getElementById(`iv-base-${s}`);
+    if (el) el.textContent = pokemon.stats[s];
+  });
+
+  // Clear previous results
+  ['hp','atk','def','spa','spd','spe'].forEach(s => {
+    document.getElementById(`iv-result-${s}`).textContent = '-';
+    document.getElementById(`iv-result-${s}`).className = 'iv-result-cell';
+  });
+  document.getElementById('iv-calc-summary').innerHTML = '';
+}
+
+function runIVCalc() {
+  const pokemonId = document.getElementById('iv-pokemon').value;
+  if (!pokemonId) {
+    document.getElementById('iv-calc-summary').innerHTML = '<div class="iv-calc-error">ポケモンを選択してください</div>';
+    return;
+  }
+
+  const pokemon = POKEMON_DB[pokemonId];
+  if (!pokemon) return;
+
+  const level = parseInt(document.getElementById('iv-level').value) || 50;
+  const nature = document.getElementById('iv-nature').value;
+
+  const stats = ['hp','atk','def','spa','spd','spe'];
+  const results = {};
+  let hasInput = false;
+
+  stats.forEach(s => {
+    const evEl = document.querySelector(`.iv-calc-ev[data-stat="${s}"]`);
+    const realEl = document.querySelector(`.iv-calc-real[data-stat="${s}"]`);
+    const resultEl = document.getElementById(`iv-result-${s}`);
+
+    const ev = parseInt(evEl?.value) || 0;
+    const realValue = realEl?.value;
+
+    if (!realValue || realValue === '') {
+      resultEl.textContent = '-';
+      resultEl.className = 'iv-result-cell';
+      return;
+    }
+
+    hasInput = true;
+    const actual = parseInt(realValue);
+    let result;
+
+    if (s === 'hp') {
+      result = reverseCalcHPIV(pokemon.stats.hp, actual, ev, level);
+    } else {
+      const natureMod = getNatureMod(nature, s);
+      result = reverseCalcStatIV(pokemon.stats[s], actual, ev, level, natureMod);
+    }
+
+    if (result) {
+      results[s] = result;
+      if (result.min === result.max) {
+        resultEl.textContent = result.min;
+      } else {
+        resultEl.textContent = `${result.min}~${result.max}`;
+      }
+      // Color coding
+      if (result.max === 31 && result.min >= 28) {
+        resultEl.className = 'iv-result-cell iv-perfect';
+      } else if (result.max >= 28) {
+        resultEl.className = 'iv-result-cell iv-good';
+      } else if (result.max === 0) {
+        resultEl.className = 'iv-result-cell iv-zero';
+      } else {
+        resultEl.className = 'iv-result-cell';
+      }
+    } else {
+      resultEl.textContent = '該当なし';
+      resultEl.className = 'iv-result-cell iv-invalid';
+    }
+  });
+
+  if (!hasInput) {
+    document.getElementById('iv-calc-summary').innerHTML = '<div class="iv-calc-error">実数値を1つ以上入力してください</div>';
+    return;
+  }
+
+  // Summary
+  const summaryEl = document.getElementById('iv-calc-summary');
+  let summaryHTML = '<h4>計算結果</h4><div class="iv-summary-grid">';
+  stats.forEach(s => {
+    if (!results[s]) return;
+    const r = results[s];
+    const label = STAT_NAMES[s];
+    let valueText;
+    if (r.min === r.max) {
+      valueText = `<span class="iv-value-exact">${r.min}</span>`;
+    } else {
+      valueText = `<span class="iv-value-range">${r.min} ~ ${r.max}</span>`;
+    }
+
+    let judge = '';
+    if (r.max === 31 && r.min === 31) judge = '<span class="iv-judge best">さいこう</span>';
+    else if (r.max >= 30 && r.min >= 30) judge = '<span class="iv-judge great">すばらしい</span>';
+    else if (r.max >= 26) judge = '<span class="iv-judge good">かなりいい</span>';
+    else if (r.max >= 16) judge = '<span class="iv-judge decent">まあまあ</span>';
+    else if (r.max === 0 && r.min === 0) judge = '<span class="iv-judge no-good">ダメかも</span>';
+    else judge = '<span class="iv-judge decent">まあまあ</span>';
+
+    summaryHTML += `
+      <div class="iv-summary-item">
+        <div class="iv-summary-label">${label}</div>
+        <div class="iv-summary-value">${valueText}</div>
+        <div class="iv-summary-judge">${judge}</div>
+      </div>
+    `;
+  });
+  summaryHTML += '</div>';
+  summaryEl.innerHTML = summaryHTML;
+}
+
+// ============================
 // Init All
 // ============================
 document.addEventListener('DOMContentLoaded', () => {
@@ -759,4 +919,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initPokedex();
   initTypeChart();
   initStatsCompare();
+  initIVCalc();
 });

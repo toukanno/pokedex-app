@@ -22,6 +22,7 @@
                 <a href="#" class="nav-link" data-page="pokedex">ポケモン図鑑</a>
                 <a href="#" class="nav-link" data-page="type-chart">タイプ相性</a>
                 <a href="#" class="nav-link" data-page="stats-compare">種族値比較</a>
+                <a href="#" class="nav-link" data-page="iv-calc">個体値計算</a>
             </nav>
             <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
         </div>
@@ -34,6 +35,7 @@
         <a href="#" class="mobile-nav-link" data-page="pokedex">ポケモン図鑑</a>
         <a href="#" class="mobile-nav-link" data-page="type-chart">タイプ相性</a>
         <a href="#" class="mobile-nav-link" data-page="stats-compare">種族値比較</a>
+        <a href="#" class="mobile-nav-link" data-page="iv-calc">個体値計算</a>
     </div>
 
     <main class="main-content">
@@ -63,6 +65,11 @@
                     <div class="tool-card-icon">📊</div>
                     <h3>種族値比較</h3>
                     <p>複数ポケモンの種族値をグラフで比較。実数値計算にも対応。</p>
+                </div>
+                <div class="tool-card" onclick="navigateTo('iv-calc')">
+                    <div class="tool-card-icon">🧬</div>
+                    <h3>個体値計算機</h3>
+                    <p>実数値から個体値を逆算。レベル・性格・努力値を入力して正確な個体値を特定。</p>
                 </div>
             </div>
         </section>
@@ -100,6 +107,11 @@
                     <!-- 努力値・個体値 -->
                     <div class="ev-iv-section">
                         <h4>個体値 / 努力値</h4>
+                        <div class="iv-presets">
+                            <button class="iv-preset-btn" data-side="atk" data-iv="31">個体値: 全31</button>
+                            <button class="iv-preset-btn" data-side="atk" data-iv="0">個体値: 全0</button>
+                            <button class="ev-preset-btn" data-side="atk" data-preset="reset">努力値: リセット</button>
+                        </div>
                         <table class="ev-iv-table">
                             <thead>
                                 <tr><th></th><th>種族値</th><th>個体値</th><th>努力値</th><th>実数値</th></tr>
@@ -216,6 +228,11 @@
 
                     <div class="ev-iv-section">
                         <h4>個体値 / 努力値</h4>
+                        <div class="iv-presets">
+                            <button class="iv-preset-btn" data-side="def" data-iv="31">個体値: 全31</button>
+                            <button class="iv-preset-btn" data-side="def" data-iv="0">個体値: 全0</button>
+                            <button class="ev-preset-btn" data-side="def" data-preset="reset">努力値: リセット</button>
+                        </div>
                         <table class="ev-iv-table">
                             <thead>
                                 <tr><th></th><th>種族値</th><th>個体値</th><th>努力値</th><th>実数値</th></tr>
@@ -355,6 +372,48 @@
             </div>
             <div id="compare-chart" class="compare-chart"></div>
             <div id="compare-table-wrapper" class="compare-table-wrapper"></div>
+        </section>
+        <!-- ================== 個体値計算機 ================== -->
+        <section id="page-iv-calc" class="page">
+            <h2 class="page-title">個体値計算機</h2>
+            <p class="page-desc">実数値から個体値を逆算します。ポケモン・レベル・性格・努力値・実数値を入力してください。</p>
+            <div class="iv-calc-container">
+                <div class="iv-calc-inputs">
+                    <div class="iv-calc-top-inputs">
+                        <div class="input-row">
+                            <label>ポケモン</label>
+                            <select id="iv-pokemon"></select>
+                        </div>
+                        <div class="input-row">
+                            <label>Lv</label>
+                            <input type="number" id="iv-level" value="50" min="1" max="100">
+                        </div>
+                        <div class="input-row">
+                            <label>性格</label>
+                            <select id="iv-nature"></select>
+                        </div>
+                    </div>
+                    <div class="iv-calc-pokemon-info">
+                        <img id="iv-sprite" src="" alt="" class="calc-sprite">
+                        <div id="iv-types" class="calc-types"></div>
+                    </div>
+                    <table class="ev-iv-table iv-calc-table">
+                        <thead>
+                            <tr><th></th><th>種族値</th><th>努力値</th><th>実数値</th><th>個体値</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>HP</td><td id="iv-base-hp">-</td><td><input type="number" class="iv-calc-ev" data-stat="hp" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="hp" value="" min="1" placeholder="入力"></td><td id="iv-result-hp" class="iv-result-cell">-</td></tr>
+                            <tr><td>こうげき</td><td id="iv-base-atk">-</td><td><input type="number" class="iv-calc-ev" data-stat="atk" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="atk" value="" min="1" placeholder="入力"></td><td id="iv-result-atk" class="iv-result-cell">-</td></tr>
+                            <tr><td>ぼうぎょ</td><td id="iv-base-def">-</td><td><input type="number" class="iv-calc-ev" data-stat="def" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="def" value="" min="1" placeholder="入力"></td><td id="iv-result-def" class="iv-result-cell">-</td></tr>
+                            <tr><td>とくこう</td><td id="iv-base-spa">-</td><td><input type="number" class="iv-calc-ev" data-stat="spa" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="spa" value="" min="1" placeholder="入力"></td><td id="iv-result-spa" class="iv-result-cell">-</td></tr>
+                            <tr><td>とくぼう</td><td id="iv-base-spd">-</td><td><input type="number" class="iv-calc-ev" data-stat="spd" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="spd" value="" min="1" placeholder="入力"></td><td id="iv-result-spd" class="iv-result-cell">-</td></tr>
+                            <tr><td>すばやさ</td><td id="iv-base-spe">-</td><td><input type="number" class="iv-calc-ev" data-stat="spe" value="0" min="0" max="252" step="4"></td><td><input type="number" class="iv-calc-real" data-stat="spe" value="" min="1" placeholder="入力"></td><td id="iv-result-spe" class="iv-result-cell">-</td></tr>
+                        </tbody>
+                    </table>
+                    <button class="calc-btn" id="iv-calc-btn">個体値を計算</button>
+                </div>
+                <div class="iv-calc-summary" id="iv-calc-summary"></div>
+            </div>
         </section>
     </main>
 
