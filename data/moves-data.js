@@ -7,6 +7,7 @@ const MOVES_DB = {
   "ギガインパクト":   { type: "ノーマル", category: "物理", power: 150, accuracy: 90, pp: 5, effect: "次ターン行動不能" },
   "しんそく":         { type: "ノーマル", category: "物理", power: 80, accuracy: 100, pp: 5, effect: "先制攻撃+2" },
   "でんこうせっか":   { type: "ノーマル", category: "物理", power: 40, accuracy: 100, pp: 30, effect: "先制攻撃+1" },
+  "ひっかく":         { type: "ノーマル", category: "物理", power: 40, accuracy: 100, pp: 35, effect: "" },
   "きりさく":         { type: "ノーマル", category: "物理", power: 70, accuracy: 100, pp: 20, effect: "急所に当たりやすい" },
   "DDラリアット":     { type: "あく", category: "物理", power: 85, accuracy: 100, pp: 10, effect: "相手の能力変化無視" },
   "ハイパーボイス":   { type: "ノーマル", category: "特殊", power: 90, accuracy: 100, pp: 10, effect: "" },
@@ -53,6 +54,8 @@ const MOVES_DB = {
   "ボルトチェンジ":   { type: "でんき", category: "特殊", power: 70, accuracy: 100, pp: 20, effect: "攻撃後交代" },
   "ほうでん":         { type: "でんき", category: "特殊", power: 80, accuracy: 100, pp: 15, effect: "30%まひ" },
   "かみなりパンチ":   { type: "でんき", category: "物理", power: 75, accuracy: 100, pp: 15, effect: "10%まひ" },
+  "ほのおのパンチ":   { type: "ほのお", category: "物理", power: 75, accuracy: 100, pp: 15, effect: "10%やけど" },
+  "れいとうパンチ":   { type: "こおり", category: "物理", power: 75, accuracy: 100, pp: 15, effect: "10%こおり" },
   "パラボラチャージ": { type: "でんき", category: "特殊", power: 65, accuracy: 100, pp: 20, effect: "与ダメの半分回復" },
   "イナズマドライブ": { type: "でんき", category: "特殊", power: 100, accuracy: 100, pp: 5, effect: "テラスタル時タイプ変化" },
   // くさ技
@@ -147,6 +150,7 @@ const MOVES_DB = {
   "ドラゴンアロー":   { type: "ドラゴン", category: "物理", power: 50, accuracy: 100, pp: 10, effect: "2回攻撃" },
   // あく技
   "あくのはどう":     { type: "あく", category: "特殊", power: 80, accuracy: 100, pp: 15, effect: "20%ひるみ" },
+  "かみつく":         { type: "あく", category: "物理", power: 60, accuracy: 100, pp: 25, effect: "30%ひるみ" },
   "かみくだく":       { type: "あく", category: "物理", power: 80, accuracy: 100, pp: 15, effect: "20%ぼうぎょ-1" },
   "ふいうち":         { type: "あく", category: "物理", power: 70, accuracy: 100, pp: 5, effect: "先制。相手が攻撃技選択時のみ" },
   "はたきおとす":     { type: "あく", category: "物理", power: 65, accuracy: 100, pp: 20, effect: "持ち物あり時威力1.5倍+はたき落とす" },
