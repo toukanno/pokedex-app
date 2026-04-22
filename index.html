@@ -288,9 +288,10 @@
         <section id="page-pokedex" class="page">
             <h2 class="page-title">ポケモン図鑑</h2>
             <div class="pokedex-search-bar">
-                <input type="text" id="pokedex-search" placeholder="ポケモン名で検索...">
+                <input type="text" id="pokedex-search" placeholder="ポケモン名/図鑑番号で検索...">
                 <div class="type-filter" id="type-filter"></div>
             </div>
+            <div id="pokedex-status" class="pokedex-status" aria-live="polite"></div>
             <div id="pokedex-grid" class="pokedex-grid"></div>
 
             <!-- 図鑑詳細モーダル -->
@@ -435,6 +436,7 @@
     <script src="data/pokemon-data.js"></script>
     <script src="data/moves-data.js"></script>
     <script src="data/damage-calc.js"></script>
+    <script src="data/pokedex-api.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

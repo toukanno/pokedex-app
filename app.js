@@ -392,12 +392,15 @@ function displayDamageResult(result, atkId, defId, moveName) {
 }
 
 // ============================
-// Pokedex Page
+// Pokedex Page (PokeAPI連携)
 // ============================
 let activeTypeFilter = null;
+let pokedexMasterList = [];  // [{ id, nameEn, nameJp }]
+let pokedexCardObserver = null;
+
+const SPRITE_URL_BY_ID = (id) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 
 function initPokedex() {
-  renderPokedexGrid();
   initTypeFilter();
 
   document.getElementById('pokedex-search').addEventListener('input', debounce(filterPokedex, 200));
@@ -413,44 +416,149 @@ function initPokedex() {
       modal.classList.add('hidden');
     }
   });
+
+  // 初回ロード: PokeAPI から全ポケモン一覧を取得
+  loadPokedexInitial();
+}
+
+async function loadPokedexInitial() {
+  const status = document.getElementById('pokedex-status');
+  status.textContent = 'ポケモン一覧を取得中...';
+
+  try {
+    pokedexMasterList = await window.PokedexAPI.loadPokedexList();
+  } catch (e) {
+    console.error(e);
+    pokedexMasterList = [];
+  }
+
+  if (pokedexMasterList.length === 0) {
+    status.innerHTML = '<span class="pokedex-status-error">⚠ PokeAPIに接続できませんでした。ローカルデータで表示します。</span>';
+    // フォールバック: ローカルDBのみ
+    pokedexMasterList = Object.entries(POKEMON_DB)
+      .map(([id, p]) => ({ id: Number(id), nameEn: p.nameEn, nameJp: p.name }))
+      .sort((a, b) => a.id - b.id);
+  } else {
+    status.textContent = `全${pokedexMasterList.length}匹 読み込み完了`;
+    setTimeout(() => { status.textContent = ''; }, 2000);
+  }
+
+  renderPokedexGrid();
 }
 
 function renderPokedexGrid() {
   const grid = document.getElementById('pokedex-grid');
   grid.innerHTML = '';
-  const list = getSortedPokemonList();
+
+  // 既存のobserverを破棄
+  if (pokedexCardObserver) {
+    pokedexCardObserver.disconnect();
+    pokedexCardObserver = null;
+  }
+
   const searchQuery = (document.getElementById('pokedex-search')?.value || '').toLowerCase();
 
-  list.forEach(poke => {
-    // Filter
-    if (searchQuery && !poke.name.includes(searchQuery) && !poke.nameEn.includes(searchQuery) && !String(poke.id).includes(searchQuery)) return;
-    if (activeTypeFilter && !poke.types.includes(activeTypeFilter)) return;
+  const filtered = pokedexMasterList.filter(entry => {
+    if (searchQuery) {
+      const jp = (entry.nameJp || '').toLowerCase();
+      const en = (entry.nameEn || '').toLowerCase();
+      const idStr = String(entry.id);
+      if (!jp.includes(searchQuery) && !en.includes(searchQuery) && !idStr.includes(searchQuery)) {
+        return false;
+      }
+    }
+    if (activeTypeFilter) {
+      const poke = POKEMON_DB[entry.id];
+      // 詳細未取得の場合は表示しておき、詳細取得後に再フィルタ
+      if (poke && poke.types && !poke.types.includes(activeTypeFilter)) return false;
+      if (!poke || !poke.types) return false;  // タイプが判明しているものだけ
+    }
+    return true;
+  });
 
-    const card = document.createElement('div');
-    card.className = 'poke-card';
-    card.addEventListener('click', () => showPokedexDetail(poke.id));
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="pokedex-empty">該当するポケモンが見つかりませんでした</div>';
+    return;
+  }
 
-    const total = Object.values(poke.stats).reduce((a, b) => a + b, 0);
+  // IntersectionObserver で表示カードのみ詳細を遅延取得
+  pokedexCardObserver = new IntersectionObserver(onCardVisible, {
+    root: null,
+    rootMargin: '200px',
+    threshold: 0.01
+  });
 
-    card.innerHTML = `
-      <img src="${SPRITE_URL(poke.nameEn)}" alt="${poke.name}" loading="lazy">
-      <span class="pokemon-number">#${String(poke.id).padStart(3, '0')}</span>
-      <div class="pokemon-name-jp">${poke.name}</div>
-      <div class="pokemon-name-en">${poke.nameEn}</div>
-      <div class="card-types">
-        ${poke.types.map(t => `<span class="type-badge type-${t}" style="font-size:0.65rem;padding:1px 8px">${t}</span>`).join('')}
-      </div>
-      <div class="mini-stats">
-        <span>H${poke.stats.hp}</span>
-        <span>A${poke.stats.atk}</span>
-        <span>B${poke.stats.def}</span>
-        <span>C${poke.stats.spa}</span>
-        <span>D${poke.stats.spd}</span>
-        <span>S${poke.stats.spe}</span>
-        <span style="font-weight:900">計${total}</span>
-      </div>
-    `;
+  filtered.forEach(entry => {
+    const card = buildPokedexCard(entry);
     grid.appendChild(card);
+    pokedexCardObserver.observe(card);
+  });
+}
+
+function buildPokedexCard(entry) {
+  const card = document.createElement('div');
+  card.className = 'poke-card';
+  card.dataset.pokeId = entry.id;
+  card.addEventListener('click', () => showPokedexDetail(entry.id));
+
+  const poke = POKEMON_DB[entry.id];
+  const displayName = entry.nameJp || (poke && poke.name) || entry.nameEn;
+
+  if (poke && poke.stats && poke.types) {
+    fillPokedexCard(card, entry, poke);
+  } else {
+    card.innerHTML = `
+      <img src="${SPRITE_URL_BY_ID(entry.id)}" alt="${displayName}" loading="lazy">
+      <span class="pokemon-number">#${String(entry.id).padStart(3, '0')}</span>
+      <div class="pokemon-name-jp">${displayName}</div>
+      <div class="pokemon-name-en">${entry.nameEn}</div>
+      <div class="card-types"><span class="poke-card-loading">読込中...</span></div>
+      <div class="mini-stats">&nbsp;</div>
+    `;
+  }
+  return card;
+}
+
+function fillPokedexCard(card, entry, poke) {
+  const total = Object.values(poke.stats).reduce((a, b) => a + b, 0);
+  const displayName = poke.name || entry.nameJp || entry.nameEn;
+  card.innerHTML = `
+    <img src="${SPRITE_URL_BY_ID(entry.id)}" alt="${displayName}" loading="lazy">
+    <span class="pokemon-number">#${String(entry.id).padStart(3, '0')}</span>
+    <div class="pokemon-name-jp">${displayName}</div>
+    <div class="pokemon-name-en">${poke.nameEn || entry.nameEn}</div>
+    <div class="card-types">
+      ${(poke.types || []).map(t => `<span class="type-badge type-${t}" style="font-size:0.65rem;padding:1px 8px">${t}</span>`).join('')}
+    </div>
+    <div class="mini-stats">
+      <span>H${poke.stats.hp}</span>
+      <span>A${poke.stats.atk}</span>
+      <span>B${poke.stats.def}</span>
+      <span>C${poke.stats.spa}</span>
+      <span>D${poke.stats.spd}</span>
+      <span>S${poke.stats.spe}</span>
+      <span style="font-weight:900">計${total}</span>
+    </div>
+  `;
+}
+
+function onCardVisible(entries, observer) {
+  entries.filter(e => e.isIntersecting).forEach(async e => {
+    const card = e.target;
+    const id = Number(card.dataset.pokeId);
+    observer.unobserve(card);
+
+    if (POKEMON_DB[id] && POKEMON_DB[id].stats && POKEMON_DB[id].types) return;
+
+    try {
+      const detail = await window.PokedexAPI.loadPokemonDetail(id);
+      if (!detail) return;
+      const masterEntry = pokedexMasterList.find(m => m.id === id);
+      if (masterEntry && !masterEntry.nameJp) masterEntry.nameJp = detail.name;
+      fillPokedexCard(card, masterEntry || { id, nameEn: detail.nameEn }, detail);
+    } catch (err) {
+      console.warn('Failed to load detail for', id, err);
+    }
   });
 }
 
@@ -487,31 +595,53 @@ function filterPokedex() {
   renderPokedexGrid();
 }
 
-function showPokedexDetail(pokemonId) {
-  const poke = POKEMON_DB[pokemonId];
-  if (!poke) return;
+async function showPokedexDetail(pokemonId) {
+  const modal = document.getElementById('pokedex-modal');
+  modal.classList.remove('hidden');
 
-  document.getElementById('modal-sprite').src = SPRITE_URL(poke.nameEn);
+  // 先にスピナー表示
+  document.getElementById('modal-sprite').src = SPRITE_URL_BY_ID(pokemonId);
+  document.getElementById('modal-name').textContent = '読込中...';
+  document.getElementById('modal-id').textContent = `#${String(pokemonId).padStart(3, '0')}`;
+  document.getElementById('modal-types').innerHTML = '';
+  document.getElementById('modal-abilities').innerHTML = '';
+  document.getElementById('modal-stats').innerHTML = '';
+  document.getElementById('modal-stats-total').textContent = '';
+  document.getElementById('modal-moves').innerHTML = '';
+
+  let poke = POKEMON_DB[pokemonId];
+  if (!poke || !poke.stats || !poke.types) {
+    try {
+      poke = await window.PokedexAPI.loadPokemonDetail(pokemonId);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  if (!poke) {
+    document.getElementById('modal-name').textContent = 'データ取得失敗';
+    return;
+  }
+
+  document.getElementById('modal-sprite').src = SPRITE_URL_BY_ID(pokemonId);
   document.getElementById('modal-name').textContent = poke.name;
   document.getElementById('modal-id').textContent = `#${String(pokemonId).padStart(3, '0')} ${poke.nameEn}`;
 
   const typesEl = document.getElementById('modal-types');
   typesEl.innerHTML = '';
-  poke.types.forEach(t => typesEl.appendChild(createTypeBadge(t)));
+  (poke.types || []).forEach(t => typesEl.appendChild(createTypeBadge(t)));
 
-  // Abilities
   const abilitiesEl = document.getElementById('modal-abilities');
-  let abText = `特性: ${poke.abilities.join(' / ')}`;
+  const abilities = poke.abilities || [];
+  let abText = abilities.length ? `特性: ${abilities.join(' / ')}` : '';
   if (poke.hiddenAbility) abText += ` | <span class="hidden-ability">夢特性: ${poke.hiddenAbility}</span>`;
   abilitiesEl.innerHTML = abText;
 
-  // Stats
   const statsEl = document.getElementById('modal-stats');
   statsEl.innerHTML = '';
   let total = 0;
   const statOrder = ['hp','atk','def','spa','spd','spe'];
   statOrder.forEach(key => {
-    const val = poke.stats[key];
+    const val = (poke.stats && poke.stats[key]) || 0;
     total += val;
     const pct = Math.min(val / 255 * 100, 100);
     statsEl.innerHTML += `
@@ -526,26 +656,33 @@ function showPokedexDetail(pokemonId) {
   });
   document.getElementById('modal-stats-total').textContent = `合計: ${total}`;
 
-  // Moves
+  // 技一覧: ローカル MOVES_DB にある日本語名は詳細表示、それ以外は英語スラッグで表示
   const movesEl = document.getElementById('modal-moves');
   movesEl.innerHTML = '';
-  if (poke.moves) {
+  if (poke.moves && poke.moves.length) {
     poke.moves.forEach(mName => {
       const move = MOVES_DB[mName];
-      if (!move) return;
-      const typeColor = getTypeColorHex(move.type);
-      movesEl.innerHTML += `
-        <div class="move-chip">
-          <span class="move-type-dot" style="background:${typeColor}"></span>
-          <span class="move-name">${mName}</span>
-          <span class="move-cat cat-${move.category}">${move.category}</span>
-          <span class="move-power">${move.power > 0 ? move.power : '-'}</span>
-        </div>
-      `;
+      if (move) {
+        const typeColor = getTypeColorHex(move.type);
+        movesEl.innerHTML += `
+          <div class="move-chip">
+            <span class="move-type-dot" style="background:${typeColor}"></span>
+            <span class="move-name">${mName}</span>
+            <span class="move-cat cat-${move.category}">${move.category}</span>
+            <span class="move-power">${move.power > 0 ? move.power : '-'}</span>
+          </div>
+        `;
+      } else {
+        movesEl.innerHTML += `
+          <div class="move-chip move-chip-basic">
+            <span class="move-name">${mName}</span>
+          </div>
+        `;
+      }
     });
+  } else {
+    movesEl.innerHTML = '<div class="no-moves">技データなし</div>';
   }
-
-  document.getElementById('pokedex-modal').classList.remove('hidden');
 }
 
 function getTypeColorHex(typeName) {
