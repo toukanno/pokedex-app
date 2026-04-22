@@ -38,6 +38,26 @@ npm start
 | `GET /api/pokemon/:id` | ポケモン詳細 |
 | `GET /api/pokemon/:id/image/:type` | 画像取得 (type: front_default, front_shiny, official) |
 
+## Vercel デプロイ（静的 SPA 公開）
+
+静的な SPA 部分（`index.html` / `app.js` / `style.css` / `data/`）を Vercel で公開する設定が同梱されています。
+
+### 必要な GitHub Secrets
+`Settings → Secrets and variables → Actions` に以下を登録:
+
+| 名前 | 取得元 |
+|---|---|
+| `VERCEL_TOKEN` | https://vercel.com/account/tokens |
+| `VERCEL_ORG_ID` | `.vercel/project.json` の `orgId`（`vercel link` 後に生成） |
+| `VERCEL_PROJECT_ID` | `.vercel/project.json` の `projectId` |
+
+### フロー
+- `main` への push → 本番デプロイ（`vercel deploy --prod`）
+- PR / その他ブランチ push → プレビューデプロイ（PR にコメントで URL 通知）
+
+ワークフロー: `.github/workflows/vercel-deploy.yml`
+設定: `vercel.json`, `.vercelignore`
+
 ## DBスキーマ
 
 ### pokemon テーブル
